@@ -24,13 +24,15 @@ def main():
 	
 	# make deck object and arrange it
 	#deck = cardgame.CardDeck()
-	deck = cardgame.BorderedCardDeck()  # different card theme
+	#deck = cardgame.BorderedCardDeck()  # different card theme
+	deck = cardgame.EukreDeck()
 	#deck.cascade_cards(10,10)		   # different arrangement
 	#deck.flip_deck()
 	deck.shuffle()
-	#deck.slide_cards(10,10)
-	deck.flip_deck()
-	deck.stack_cards(10,10)
+	deck.slide_cards(10,10)
+	#deck.flip_deck()
+	#deck.stack_cards(10,10)
+	#deck.remove_jokers()
 	
 	# messy flags, need simplification
 	incard = False		  # within bounds of a card
@@ -58,6 +60,7 @@ def main():
 						if sprite.rect.collidepoint(mx, my) and dragging == False:
 							incard = True
 							hoversprite = sprite
+							#deck.bring_to_front(sprite)
 							break
 						else:
 							incard = False
@@ -73,6 +76,7 @@ def main():
 						dragging = True
 						insprite.rect.centerx = mx
 						insprite.rect.centery = my
+						deck.bring_to_front(insprite)
 						break
 					else:
 						incard = False
@@ -81,18 +85,22 @@ def main():
 			elif event.type == pygame.MOUSEBUTTONUP:
 				(mx, my) = event.pos
 				mousedown = False
-				insprite = None
+				#insprite = None
 				dragging = False
-			elif (event.type == KEYUP):
-				#print event
-				if (event.key == K_f):
-					deck.flip_deck()
+			elif (event.type == KEYUP) and (event.key == K_f):
+				deck.flip_deck()
+			elif (event.type == KEYUP) and (event.key == K_s):
+				deck.shuffle()
+			elif (event.type == KEYUP) and (event.key == K_r):
+				deck.shuffle()
+				deck.slide_cards(10, 10)
 
 		screen.blit(background, (0,0))
 		deck.clear(screen, background)
 		r = deck.draw(screen)
 		deck.update(r)
-		#### TODO: problems arise when dragging cards over each other, fix it
+		""" This is sorta pointless, need to just boost selected card to the
+		    top when being dragged
 		if incard == True and insprite != None and hoversprite == None:
 			insprite.update()
 			cardsprite = pygame.sprite.RenderPlain(insprite)
@@ -105,6 +113,7 @@ def main():
 			cardsprite.draw(screen)
 		if insprite != None:
 			pygame.draw.rect(screen,(183,183,183),insprite.rect.inflate(4,4),1)
+		"""
 		if hoversprite != None:
 			pygame.draw.rect(screen,(183,183,183),hoversprite.rect.inflate(4,4),1)
 		pygame.display.flip()

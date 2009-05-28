@@ -12,6 +12,10 @@ class Card(pygame.sprite.Sprite):
 	def get_image(self): 
 		return self.image
 	
+	indeck = True
+	deck_position = (0,0)
+	table_position = (0,0)
+	
 	def set_facedown(self):
 		self.image = self.back
 		self.facedown = True
@@ -39,16 +43,38 @@ class Card(pygame.sprite.Sprite):
 		self.rect.left = x
 		self.rect.top = y
 		self.rect.clamp_ip(self.area)   # keep within window
+		if (self.indeck == True):
+			self.deck_position = (x,y)
+			for deck in self.groups():
+				self.deck_position = (x,deck.y)
+			self.rect.left = self.deck_position[0]
+			self.rect.top = self.deck_position[1]
+			self.rect.clamp_ip(self.area)
+		else:
+			self.table_position = (x,y)
+			self.rect.left = self.table_position[0]
+			self.rect.top = self.table_position[1]
+			self.rect.clamp_ip(self.area)
 
 
 # object represents a deck of cards
-class CardDeck(pygame.sprite.OrderedUpdates):
+class CardDeck(pygame.sprite.LayeredUpdates):
 	theme = 'white'		# change on derived classes for new deck styles
 	back_id = 'back01'	  # back style, same as above
-	def __init__(self):
+	def __init__(self,jokers=False):
 		""" Initializes all the cards in the deck using the selected theme """
-		pygame.sprite.OrderedUpdates.__init__(self)
+		pygame.sprite.LayeredUpdates.__init__(self)
 		self.reload_ordered()
+	
+	def bring_to_front(self, card):
+		self.move_to_front(card)
+	
+	def remove_jokers(self):
+		for card in self.sprites():
+			if card.get_value() == CardValues.JOKER:
+				self.remove(card)
+	
+	(x,y) = (10,10)
 	
 	def reload_ordered(self):
 		self.empty()
@@ -200,6 +226,24 @@ class WhiteCardDeck(CardDeck):
 
 class SimpleCardDeck(CardDeck):
 	theme = 'simple'
+
+class EukreDeck(CardDeck):
+	
+	def __init__(self):
+		CardDeck.__init__(self)
+		self.remove_jokers()
+		count = 0
+		for card in self.sprites():
+			if (card.get_value() != CardValues.NINE and
+					card.get_value() != CardValues.TEN and
+					card.get_value() != CardValues.JACK and
+					card.get_value() != CardValues.QUEEN and
+					card.get_value() != CardValues.KING and
+					card.get_value() != CardValues.ACE):
+				print count, ": Removing card ", CardValues.get_value_name(card.get_value()), " of ", CardSuits.get_suit_name(card.get_suit())
+				self.remove(card)
+				count = count + 1
+		self.shuffle()
 
 # EXTRA DATA/HELPER STUFF
 
