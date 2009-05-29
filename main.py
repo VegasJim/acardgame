@@ -1,13 +1,30 @@
 #!/usr/bin/env python
-
-import sys,os
+#
+#       main.py - Card Game Launcher Script
+#       
+#       Copyright 2009 Matthew Brush <mbrush@leftclick.ca>
+#       
+#       This program is free software; you can redistribute it and/or modify
+#       it under the terms of the GNU General Public License as published by
+#       the Free Software Foundation; either version 2 of the License, or
+#       (at your option) any later version.
+#       
+#       This program is distributed in the hope that it will be useful,
+#       but WITHOUT ANY WARRANTY; without even the implied warranty of
+#       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#       GNU General Public License for more details.
+#       
+#       You should have received a copy of the GNU General Public License
+#       along with this program; if not, write to the Free Software
+#       Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+#       MA 02110-1301, USA.
 import pygame
 from pygame.locals import *
-import cardgame
-
+from deckofcards import *
 
 def main():
 	""" Main game function """
+    
 	# init lib and screen
 	pygame.init()
 	screen = pygame.display.set_mode((800,600))
@@ -22,52 +39,55 @@ def main():
 	screen.blit(background, (0,0))
 	pygame.display.flip()
 	
-	# make deck object and arrange it
-	#deck = cardgame.CardDeck()
-	#deck = cardgame.BorderedCardDeck()  # different card theme
-	deck = cardgame.EukreDeck()
-	#deck.cascade_cards(10,10)		   # different arrangement
-	#deck.flip_deck()
-	deck.shuffle()
-	deck.slide_cards(10,10)
-	#deck.flip_deck()
-	#deck.stack_cards(10,10)
-	#deck.remove_jokers()
+	# setup a deck, with various options
+	#deck = CardDeck()             # default card theme, base class
+	#deck = BorderedCardDeck()     # different card theme
+	deck = EukreDeck()             # customized deck for Eukre
+	#deck.cascade_cards(10,10)		        # cascade cards from top left to
+                                            # bottom right
+	deck.shuffle()                          # randomize cards in deck
+	deck.slide_cards(10,10)                 # slide cards from left to right
+	#deck.stack_cards(10,10)                # stack cards one atop the other
+	#deck.flip_deck()                       # flip deck over
+	#deck.remove_jokers()                   # delete joker cards from deck
 	
-	# messy flags, need simplification
-	incard = False		  # within bounds of a card
-	insprite = None		 # sprite/card being moved
-	hoversprite = None	  # sprite/card being hovered over
-	dragging = False		# card being dragged
-	mousedown = False	   # mouse is down
-	(mx, my) = (0, 0)	   # track mouse position
+    # some flags to track deck/card state
+	incard = False		                    # is cursor within bounds of a card
+	insprite = None		                    # sprite/card being moved
+	hoversprite = None	                    # sprite/card being hovered over
+	dragging = False		                # is card being dragged
+	mousedown = False	                    # mouse is down
+	(mx, my) = (0, 0)	                    # track mouse position
 	
 	# main game loop
 	while 1:
 		for event in pygame.event.get():
-			if event.type == QUIT:
+            # when window is closed or escape key pressed, exit main function
+			if (event.type == QUIT or 
+                (event.type == KEYUP and event.key == K_ESCAPE)):
 				return 0
+            # when mouse is moving
 			elif event.type == pygame.MOUSEMOTION:
 				(mx, my) = event.pos
-				if insprite != None and dragging == True:
+				if insprite and dragging:
 					insprite.rect.centerx = mx
 					insprite.rect.centery = my
-					
-					# todo: snap card to other cards
-					
 				else:
 					for sprite in deck.sprites():
-						if sprite.rect.collidepoint(mx, my) and dragging == False:
+                        # grab the first card in the list being hovered
+						if sprite.rect.collidepoint(mx, my) and not dragging:
 							incard = True
 							hoversprite = sprite
-							#deck.bring_to_front(sprite)
 							break
+                        # otherwise nothing is being hovered
 						else:
 							incard = False
 							insprite = None
+            # when a mouse button is clicked
 			elif event.type == pygame.MOUSEBUTTONDOWN:
 				(mx, my) = event.pos
 				mousedown = True
+                # determine first card being clicked on
 				for sprite in deck.sprites():
 					if sprite.rect.collidepoint(mx, my):
 						incard = True
@@ -81,64 +101,29 @@ def main():
 					else:
 						incard = False
 						insprite = None
-
+            # when mouse button is no longer pressed
 			elif event.type == pygame.MOUSEBUTTONUP:
 				(mx, my) = event.pos
 				mousedown = False
-				#insprite = None
 				dragging = False
+            # flip deck when 'f' key is pressed
 			elif (event.type == KEYUP) and (event.key == K_f):
 				deck.flip_deck()
+            # shuffle deck when 's' key is pressed
 			elif (event.type == KEYUP) and (event.key == K_s):
 				deck.shuffle()
+            # reset/shuffle/slide cards out when 'r' is pressed
 			elif (event.type == KEYUP) and (event.key == K_r):
 				deck.shuffle()
 				deck.slide_cards(10, 10)
 
 		screen.blit(background, (0,0))
 		deck.clear(screen, background)
-		r = deck.draw(screen)
-		deck.update(r)
-		""" This is sorta pointless, need to just boost selected card to the
-		    top when being dragged
-		if incard == True and insprite != None and hoversprite == None:
-			insprite.update()
-			cardsprite = pygame.sprite.RenderPlain(insprite)
-			cardsprite.update()
-			cardsprite.draw(screen)
-		if incard == True and hoversprite != None and insprite == None:
-			hoversprite.update()
-			cardsprite = pygame.sprite.RenderPlain(hoversprite)
-			cardsprite.update()
-			cardsprite.draw(screen)
-		if insprite != None:
-			pygame.draw.rect(screen,(183,183,183),insprite.rect.inflate(4,4),1)
-		"""
-		if hoversprite != None:
+		deck.update(deck.draw(screen))
+        
+        # draw a box around the card being hovered
+		if hoversprite:
 			pygame.draw.rect(screen,(183,183,183),hoversprite.rect.inflate(4,4),1)
 		pygame.display.flip()
 
-def load_png(name):
-	""" Load image and return image object"""
-	fullname = os.path.join('data', name)
-	try:
-		image = pygame.image.load(fullname)
-		if image.get_alpha() is None:
-			image = image.convert()
-		else:
-			image = image.convert_alpha()
-	except pygame.error, message:
-			print 'Cannot load image:', fullname
-			raise SystemExit, message
-	return image, image.get_rect()
-	
-	
-def print_deck_data():
-	# testing; print deck data
-	deck = cardgame.CardDeck()
-	for card in deck.cards:
-		print cardgame.CardValues.get_value_name(card.get_value()) + ' of ' + \
-			cardgame.CardSuits.get_suit_name(card.get_suit())
-		print 'Image: ' + card.get_image()
-	
 if __name__ == '__main__': main()
