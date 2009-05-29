@@ -33,6 +33,10 @@ class Deck(pygame.sprite.LayeredUpdates):
     theme = 'white'         # change on derived classes for new deck styles
     back_id = 'back01'      # back style, same as above
     
+    deck_rectangle = (0,0,0,0)
+    
+    deck_size = "medium"    # small=25px, medium=50px, large=200px wide
+    
     def __init__(self,jokers=False):
         """ 
         Initializes all the cards in the deck using the selected theme 
@@ -121,7 +125,6 @@ class Deck(pygame.sprite.LayeredUpdates):
         self.empty()                # delete all cards from deck
         self.add(c)                 # add the randomized copy back in
         
-   
     def flip_deck(self):
         for sprite in self.sprites():
             if sprite.facedown:
@@ -172,7 +175,7 @@ class Deck(pygame.sprite.LayeredUpdates):
  
     def get_card_image(self,id):
         """ Builds a cross-platform, theme-specific path name for the card image """
-        path = os.path.join('cards', self.theme)
+        path = os.path.join('cards',self.deck_size, self.theme)
         path = os.path.join(path, self.theme + '_' + id + '.png')
         try:
             image = pygame.image.load(path)
@@ -187,7 +190,7 @@ class Deck(pygame.sprite.LayeredUpdates):
     
     def get_card_back_image(self,id):
         """ Builds a cross-platform path to the card back image """
-        path = os.path.join('cards','backs')
+        path = os.path.join('cards',self.deck_size,'backs')
         path = os.path.join(path,id + '.png')
         try:
             image = pygame.image.load(path)

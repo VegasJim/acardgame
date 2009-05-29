@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-#       card.py
+#       playingcard.py
 #       
 #       Copyright 2009 Matthew Brush <mbrush@leftclick.ca>
 #       
@@ -66,7 +66,7 @@ class Card(pygame.sprite.Sprite):
 				self.deck_position = (x,deck.y)
 			self.rect.left = self.deck_position[0]
 			self.rect.top = self.deck_position[1]
-			self.rect.clamp_ip(self.area)
+			#self.rect.clamp_ip(self.area)
 		else:
 			self.table_position = (x,y)
 			self.rect.left = self.table_position[0]

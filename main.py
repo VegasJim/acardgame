@@ -59,8 +59,12 @@ def main():
     mousedown = False                       # mouse is down
     (mx, my) = (0, 0)                       # track mouse position
     
+    grid_size = 12                          # set to 1 for no snapping
+    selrect = None
+    
     # main game loop
     while 1:
+        #pygame.time.delay(30)
         for event in pygame.event.get():
             # when window is closed or escape key pressed, exit main function
             if (event.type == QUIT or 
@@ -69,24 +73,34 @@ def main():
             # when mouse is moving
             elif event.type == pygame.MOUSEMOTION:
                 (mx, my) = event.pos
+                fx = round(mx / grid_size) * grid_size
+                fy = round(my / grid_size) * grid_size
                 if insprite and dragging:
-                    insprite.rect.centerx = mx
-                    insprite.rect.centery = my
+                    insprite.rect.centerx = fx
+                    insprite.rect.centery = fy
+                    insprite.rect.clamp_ip((10,10,600,600))
                 else:
                     for sprite in deck.sprites():
                         # grab the first card in the list being hovered
                         if sprite.rect.collidepoint(mx, my) and not dragging:
                             incard = True
                             hoversprite = sprite
+                            selstart = None
+                            selrect = None
                             break
                         # otherwise nothing is being hovered
                         else:
                             incard = False
                             insprite = None
+                            hoversprite = None
+                                
+                            
             # when a mouse button is clicked
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 (mx, my) = event.pos
                 mousedown = True
+                selstart = (mx,my)
+                selrect = None
                 # determine first card being clicked on
                 for sprite in deck.sprites():
                     if sprite.rect.collidepoint(mx, my):
@@ -121,16 +135,24 @@ def main():
         deck.clear(screen, background)
         deck.update(deck.draw(screen))
         
-        draw_deck(screen)
-        
+        draw_deck(screen,deck)
+        if insprite:
+            draw_status_area(screen,mx,my, grid_size,insprite,None)
+        elif hoversprite:
+            draw_status_area(screen,mx,my, None,None,hoversprite)
+        else:
+            draw_status_area(screen,mx,my,None,None,None)
         # draw a box around the card being hovered
         if hoversprite:
             pygame.draw.rect(screen,(183,183,183),hoversprite.rect.inflate(4,4),1)
+        if insprite:
+            pygame.draw.rect(screen,(255,0,0),insprite.rect.inflate(4,4),1)
+            
         pygame.display.flip()
 
-def draw_deck(screen):
+def draw_deck(screen,deck):
     # Create a font
-    font = pygame.font.Font(None, 24)
+    font = pygame.font.Font(None, 18)
 
     # Render the text
     text = font.render('Deck of Cards', True, (255, 255, 255))
@@ -139,10 +161,59 @@ def draw_deck(screen):
     textRect = text.get_rect()
 
     # Center the rectangle
-    textRect.top = 10
-    textRect.left = 10
+    textRect.top = 12
+    textRect.left = 12
+    
+    deck.deck_rectangle = (10,10,720,98)
+    
+    pygame.draw.rect(screen, (255,255,255), (10,10,702,98), 1)
 
     # Blit the text
     screen.blit(text, textRect)
+
+def draw_status_area(screen, mx, my, grid_size,card,hovercard):
+    font = pygame.font.Font(None,16)
+    
+    text_status_title = font.render('STATUS:', True, (255,255,255))
+    text_status_rect = text_status_title.get_rect()
+    text_status_rect.top = 500
+    text_status_rect.left = 10
+    
+    text_mouse = font.render('Mouse Position: ' + str(mx) + ' x ' + str(my), True, (255,255,255))
+    text_mouse_rect = text_mouse.get_rect()
+    text_mouse_rect.top = 520
+    text_mouse_rect.left = 10
+
+    if card:
+        suitname = CardSuits.get_suit_name(card.get_suit())
+        valuename = CardValues.get_value_name(card.get_value())
+        text_card_val = font.render('Card: ' + valuename + ' of ' + suitname, True, (255,255,255))
+        text_card_val_rect = text_card_val.get_rect()
+        text_card_val_rect.top = 540
+        text_card_val_rect.left = 10
+        screen.blit(text_card_val, text_card_val_rect)
+
+    if hovercard:
+        suitname = CardSuits.get_suit_name(hovercard.get_suit())
+        valuename = CardValues.get_value_name(hovercard.get_value())
+        text_card_val = font.render('Card: ' + valuename + ' of ' + suitname, True, (255,255,255))
+        text_card_val_rect = text_card_val.get_rect()
+        text_card_val_rect.top = 540
+        text_card_val_rect.left = 10
+        screen.blit(text_card_val, text_card_val_rect)
+    
+    if grid_size:
+        fx = int(round(mx / grid_size) * grid_size)
+        fy = int(round(my / grid_size) * grid_size)
+        
+        text_card_pos = font.render('Card Position: ' + str(fx) + ' x ' + str(fy), True, (255,255,255))
+        text_card_pos_rect = text_card_pos.get_rect()
+        text_card_pos_rect.top = 560
+        text_card_pos_rect.left = 10
+        screen.blit(text_card_pos, text_card_pos_rect)
+    
+    
+    screen.blit(text_status_title, text_status_rect)
+    screen.blit(text_mouse, text_mouse_rect)
 
 if __name__ == '__main__': main()
