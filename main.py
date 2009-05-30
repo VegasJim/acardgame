@@ -21,6 +21,7 @@
 import pygame
 from pygame.locals import *
 from deckofcards import *
+from playingcard import PreviewCard
 
 def main():
     """ Main game function """
@@ -62,6 +63,9 @@ def main():
     grid_size = 12                          # set to 1 for no snapping
     selrect = None
     
+    previewcard = PreviewCard(CardSuits.SPADES, CardValues.ACE, 
+        'simple', 'back01')
+    
     # main game loop
     while 1:
         #pygame.time.delay(30)
@@ -78,7 +82,7 @@ def main():
                 if insprite and dragging:
                     insprite.rect.centerx = fx
                     insprite.rect.centery = fy
-                    insprite.rect.clamp_ip((10,10,600,600))
+                    insprite.rect.clamp_ip((10,10,760,600))
                 else:
                     for sprite in deck.sprites():
                         # grab the first card in the list being hovered
@@ -94,27 +98,34 @@ def main():
                             insprite = None
                             hoversprite = None
                                 
-                            
             # when a mouse button is clicked
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 (mx, my) = event.pos
-                mousedown = True
-                selstart = (mx,my)
-                selrect = None
-                # determine first card being clicked on
-                for sprite in deck.sprites():
-                    if sprite.rect.collidepoint(mx, my):
-                        incard = True
-                        insprite = sprite
-                        hoversprite = None
-                        dragging = True
-                        insprite.rect.centerx = mx
-                        insprite.rect.centery = my
-                        deck.bring_to_front(insprite)
-                        break
-                    else:
-                        incard = False
-                        insprite = None
+                # on left-click perform drag
+                if event.button == 1:
+                    mousedown = True
+                    selstart = (mx,my)
+                    selrect = None
+                    # determine first card being clicked on
+                    for sprite in deck.sprites():
+                        if sprite.rect.collidepoint(mx, my):
+                            incard = True
+                            insprite = sprite
+                            hoversprite = None
+                            dragging = True
+                            insprite.rect.centerx = mx
+                            insprite.rect.centery = my
+                            deck.bring_to_front(insprite)
+                            break
+                        else:
+                            incard = False
+                            insprite = None
+                # on right-click, flip card over
+                if event.button == 3:
+                    for sprite in deck.sprites():
+                        if sprite.rect.collidepoint(mx, my):
+                            sprite.flip_card()
+                            break
             # when mouse button is no longer pressed
             elif event.type == pygame.MOUSEBUTTONUP:
                 (mx, my) = event.pos
@@ -132,6 +143,7 @@ def main():
                 deck.slide_cards(10, 10)
 
         screen.blit(background, (0,0))
+        screen.blit(previewcard.image, (780, 20))
         deck.clear(screen, background)
         deck.update(deck.draw(screen))
         
